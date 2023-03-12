@@ -69,7 +69,8 @@ e.g.
 **Not implement because of only considering ascii code.**
 
 ## TODOLIST:
-- make sure the source code just uses all the internal functon and pack the internal function to export 
+- buffer size macro and should we allocate buffer on heap?
+- t4.json test failed
 - skip function is not so complete
 - some wrong ways to use `sizeof(s)/sizeof(char)`
 - robust(fully error handling)
