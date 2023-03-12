@@ -7,15 +7,35 @@
 
 // declaration
 static AJson5 *new_item();
-static FuncStat FreeItem(AJson5 *target);
+static FuncStat AJson5_free_item(AJson5 *target);
 static parse_buffer *buffer_skip_whitespace(parse_buffer *buffer);
+static inline void AJson5_translate_to_object(AJson5 *item);
+/*
+    create all basic type
+*/
+static AJson5 *Ajson5_create_null();
+static AJson5 *AJson5_create_bool(ValueType t);
+static AJson5 *AJson5_create_int(ValueType t, int64_t num);
+static AJson5 *AJson5_create_double(double num);
+static AJson5 *AJson5_create_string(char *s);
+static AJson5 *AJson5_create_object();
+static AJson5 *AJson5_create_array();
+static FuncStat AJson5_add_item_to_array(AJson5 *target,AJson5 *item);
+static FuncStat AJson5_add_item_to_object(AJson5 *target,char *key,AJson5 *item);
 
-static FuncStat parse_value(AJson5 *item, parse_buffer *input_buffer);
-static FuncStat parse_string(AJson5 *item, parse_buffer *input_buffer);
-static FuncStat parse_array(AJson5 *item, parse_buffer *input_buffer);
-static FuncStat parse_object(AJson5 *item, parse_buffer *input_buffer);
-static FuncStat parse_json5_key_string(AJson5 *item, parse_buffer *input_buffer);
-static FuncStat parse_value(AJson5 *item, parse_buffer *input_buffer);
+
+
+static FuncStat AJson5_format_value(char *buf, AJson5 *target);
+static FuncStat AJson5_format_object(char *buf, AJson5 *target);
+static FuncStat AJson5_format_array(char *buf, AJson5 *target);
+static FuncStat AJson5_format_string(char *buf, AJson5 *target);
+static FuncStat AJson5_format_number(char *buf, AJson5 *target);
+
+static FuncStat AJson5_parse_value(AJson5 *item, parse_buffer *input_buffer);
+static FuncStat AJson5_parse_string(AJson5 *item, parse_buffer *input_buffer);
+static FuncStat AJson5_parse_array(AJson5 *item, parse_buffer *input_buffer);
+static FuncStat AJson5_parse_object(AJson5 *item, parse_buffer *input_buffer);
+static FuncStat AJson5_parse_special_key_string(AJson5 *item, parse_buffer *input_buffer);
 // done
 
 static AJson5 *new_item()
@@ -26,7 +46,7 @@ static AJson5 *new_item()
     return item;
 }
 
-AJson5 *CreateNull()
+static AJson5 *Ajson5_create_null()
 {
     AJson5 *item = new_item();
 
@@ -35,7 +55,7 @@ AJson5 *CreateNull()
     return item;
 }
 
-AJson5 *CreateBool(ValueType t)
+static AJson5 *AJson5_create_bool(ValueType t)
 {
     AJson5 *item = new_item();
 
@@ -48,7 +68,7 @@ AJson5 *CreateBool(ValueType t)
  * default UINT64
  */
 
-AJson5 *CreateInt(ValueType t, int64_t num)
+static AJson5 *AJson5_create_int(ValueType t, int64_t num)
 {
     AJson5 *item = new_item();
     if (t == AJson5_INT64)
@@ -65,7 +85,7 @@ AJson5 *CreateInt(ValueType t, int64_t num)
     return item;
 }
 
-AJson5 *CreateDouble(double num)
+static AJson5 *AJson5_create_double(double num)
 {
     AJson5 *item = new_item();
     item->type = AJson5_DOUBLE;
@@ -74,7 +94,7 @@ AJson5 *CreateDouble(double num)
     return item;
 }
 
-AJson5 *CreateString(char *s)
+static AJson5 *AJson5_create_string(char *s)
 {
     AJson5 *item = new_item();
     item->type = AJson5_STRING;
@@ -82,24 +102,25 @@ AJson5 *CreateString(char *s)
 
     return item;
 }
-AJson5 *CreateObject()
+
+
+static AJson5 *AJson5_create_object()
 {
     AJson5 *item = new_item();
     item->type = AJson5_OBJECT;
-
-    // empty item to make sure the same opertate
-
+    // empty child item to make sure the same opertate
     item->value.Child = new_item();
     return item;
+
 }
-AJson5 *CreateArray()
+static AJson5 *AJson5_create_array()
 {
     AJson5 *item = new_item();
     item->type = AJson5_ARRAY;
     item->value.Child = new_item();
     return item;
 }
-FuncStat AddItemToObject(
+static FuncStat AJson5_add_item_to_object(
     AJson5 *target,
     char *key,
     AJson5 *item)
@@ -115,7 +136,7 @@ FuncStat AddItemToObject(
     return STATUS_OK;
 }
 
-FuncStat AddItemToArray(
+static FuncStat AJson5_add_item_to_array(
     AJson5 *target,
     AJson5 *item)
 {
@@ -126,7 +147,7 @@ FuncStat AddItemToArray(
 
     return STATUS_OK;
 }
-AJson5 *CreateNumber(double num)
+static AJson5 *AJson5_create_number(double num)
 {
     AJson5 *item = new_item();
 
@@ -151,56 +172,60 @@ AJson5 *CreateNumber(double num)
     return item;
 }
 
+AJson5* CreateNumber(double num){
+    return AJson5_create_number(num);
+}
+
 FuncStat AddNullToObject(AJson5 *target, char *key)
 {
-    return AddItemToObject(target, key, CreateNull());
+    return AJson5_add_item_to_object(target, key, Ajson5_create_null());
 }
 
 FuncStat AddTrueToObject(AJson5 *target, char *key)
 {
-    return AddItemToObject(target, key, CreateBool(AJson5_TRUE));
+    return AJson5_add_item_to_object(target, key, AJson5_create_bool(AJson5_TRUE));
 }
 
 FuncStat AddFalseToObject(AJson5 *target, char *key)
 {
-    return AddItemToObject(target, key, CreateBool(AJson5_FALSE));
+    return AJson5_add_item_to_object(target, key, AJson5_create_bool(AJson5_FALSE));
 }
 
 FuncStat AddStringToObject(AJson5 *target, char *key, char *val)
 {
-    return AddItemToObject(target, key, CreateString(val));
+    return AJson5_add_item_to_object(target, key, AJson5_create_string(val));
 }
 
 FuncStat AddNumberToObject(AJson5 *target, char *key, double val)
 {
-    return AddItemToObject(target, key, CreateNumber(val));
+    return AJson5_add_item_to_object(target, key, AJson5_create_number(val));
 }
 
 AJson5 *CreateNumberArray(size_t len, double nums[])
 {
-    AJson5 *array = CreateArray();
+    AJson5 *array = AJson5_create_array();
     AJson5 *tmpObj = array->value.Child;
 
     for (size_t i = 0; i < len; i++)
     {
-        tmpObj->next = CreateNumber(nums[i]);
+        tmpObj->next = AJson5_create_number(nums[i]);
         tmpObj = tmpObj->next;
     }
     return array;
 }
 FuncStat AddNumberArrayToObject(AJson5 *target, char *key, size_t n, double nums[])
 {
-    return AddItemToObject(target, key, CreateNumberArray(n, nums));
+    return AJson5_add_item_to_object(target, key, CreateNumberArray(n, nums));
 }
 
 AJson5 *CreateStringArray(size_t len, char *vals[])
 {
-    AJson5 *array = CreateArray();
+    AJson5 *array = AJson5_create_array();
     AJson5 *tmpObj = array->value.Child;
 
     for (size_t i = 0; i < len; i++)
     {
-        tmpObj->next = CreateString(vals[i]);
+        tmpObj->next = AJson5_create_string(vals[i]);
         tmpObj = tmpObj->next;
     }
     return array;
@@ -208,7 +233,7 @@ AJson5 *CreateStringArray(size_t len, char *vals[])
 
 FuncStat AddStringArrayToObject(AJson5 *target, char *key, size_t n, char *vals[])
 {
-    return AddItemToObject(target, key, CreateStringArray(n, vals));
+    return AJson5_add_item_to_object(target, key, CreateStringArray(n, vals));
 }
 
 FuncStat InsertItemToArray(AJson5 *target, size_t n, AJson5 *item)
@@ -235,7 +260,7 @@ FuncStat DeleteItemFromArray(AJson5 *src, size_t subscript)
 }
 
 // free the item's child's next
-static FuncStat FreeItem(AJson5 *target)
+static FuncStat AJson5_free_item(AJson5 *target)
 {
     AJson5 *tmpObj = target->value.Child->next;
     // free the single link list or json object's child
@@ -244,7 +269,7 @@ static FuncStat FreeItem(AJson5 *target)
         switch (tmpObj->type)
         {
         case AJson5_OBJECT:
-            FreeItem(tmpObj);
+            AJson5_free_item(tmpObj);
             break;
         case AJson5_ARRAY:
             // free the single link list in json array
@@ -277,7 +302,7 @@ FuncStat DeleteItemFromObject(AJson5 *src, char *key)
     if (item->next != NULL)
     {
         AJson5 *next = item->next->next;
-        FreeItem(item->next);
+        AJson5_free_item(item->next);
         item->next = next;
         return STATUS_OK;
     }
@@ -287,7 +312,7 @@ FuncStat DeleteItemFromObject(AJson5 *src, char *key)
 FuncStat Clear(AJson5 *target)
 {
     // only leave the child item
-    FreeItem(target);
+    AJson5_free_item(target);
 
     return STATUS_OK;
 }
@@ -567,8 +592,11 @@ loop_end:
     return STATUS_OK;
 }
 
-static FuncStat parse_object(AJson5 *item, parse_buffer *input_buffer)
+static FuncStat AJson5_parse_object(AJson5 *item, parse_buffer *input_buffer)
 {
+    item->type = AJson5_OBJECT;
+    item->value.Child = new_item();
+    AJson5 *tmpItem = NULL;
     // this function may need a string key without quotes parse function
     if (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == '}'))
     {
@@ -597,10 +625,6 @@ static FuncStat parse_object(AJson5 *item, parse_buffer *input_buffer)
     do
     {
         AJson5 *tmp_item = new_item();
-        if (tmp_item == NULL)
-        {
-            goto fail;
-        }
 
         input_buffer->offset++;
         buffer_skip_whitespace(input_buffer);
@@ -611,9 +635,9 @@ static FuncStat parse_object(AJson5 *item, parse_buffer *input_buffer)
             goto success;
         }
 
-        if (parse_string(tmp_item, input_buffer) != STATUS_OK)
+        if (AJson5_parse_string(tmp_item, input_buffer) != STATUS_OK)
         {
-            if (parse_json5_key_string(tmp_item, input_buffer))
+            if (AJson5_parse_special_key_string(tmp_item, input_buffer))
             {
                 goto fail;
             }
@@ -631,28 +655,32 @@ static FuncStat parse_object(AJson5 *item, parse_buffer *input_buffer)
         input_buffer->offset++; // skip `:`
         buffer_skip_whitespace(input_buffer);
 
-        if (parse_value(tmp_item, input_buffer) != STATUS_OK)
+        if (AJson5_parse_value(tmp_item, input_buffer) != STATUS_OK)
         {
             goto fail;
         }
-        AddItemToObject(item, tmp_item->key, tmp_item);
+        AJson5_add_item_to_object(item, tmp_item->key, tmp_item);
         buffer_skip_whitespace(input_buffer);
-    } while (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == ','));
+    } while (can_access_at_index(input_buffer, 0) 
+    && (buffer_at_offset(input_buffer)[0] == ','));
 
     if (cannot_access_at_index(input_buffer, 0) || (buffer_at_offset(input_buffer)[0] != '}'))
     {
         goto fail; /* expected end of object */
     }
 success:
-    item->type = AJson5_OBJECT;
     input_buffer->offset++;
     return STATUS_OK;
 
 fail:
+    if (tmpItem != NULL)
+    {
+        free(tmpItem);
+    }
     return STATUS_ERROR;
 }
 
-static FuncStat parse_string(AJson5 *item, parse_buffer *input_buffer)
+static FuncStat AJson5_parse_string(AJson5 *item, parse_buffer *input_buffer)
 {
 
     char *output = NULL;
@@ -765,7 +793,7 @@ fail:
 }
 
 // this method support json5 object key string that not includes quotes
-static FuncStat parse_json5_key_string(AJson5 *item, parse_buffer *input_buffer)
+static FuncStat AJson5_parse_special_key_string(AJson5 *item, parse_buffer *input_buffer)
 {
     char *input_end = buffer_at_offset(input_buffer);
     char *input_pointer = buffer_at_offset(input_buffer);
@@ -789,7 +817,7 @@ static FuncStat parse_json5_key_string(AJson5 *item, parse_buffer *input_buffer)
     return STATUS_OK;
 }
 
-static FuncStat parse_array(AJson5 *item, parse_buffer *input_buffer)
+static FuncStat AJson5_parse_array(AJson5 *item, parse_buffer *input_buffer)
 {
 
     item->type = AJson5_ARRAY;
@@ -823,12 +851,12 @@ static FuncStat parse_array(AJson5 *item, parse_buffer *input_buffer)
         }
 
         tmpItem = new_item();
-        if (parse_value(tmpItem, input_buffer) != STATUS_OK)
+        if (AJson5_parse_value(tmpItem, input_buffer) != STATUS_OK)
         {
             goto fail;
         }
         buffer_skip_whitespace(input_buffer);
-        AddItemToArray(item, tmpItem);
+        AJson5_add_item_to_array(item, tmpItem);
 
     } while (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == ','));
 
@@ -851,7 +879,7 @@ fail:
 }
 
 // source from cjson parse_value
-static FuncStat parse_value(AJson5 *item, parse_buffer *input_buffer)
+static FuncStat AJson5_parse_value(AJson5 *item, parse_buffer *input_buffer)
 {
     if ((input_buffer == NULL) || (input_buffer->content == NULL))
         return STATUS_ERROR;
@@ -865,18 +893,18 @@ static FuncStat parse_value(AJson5 *item, parse_buffer *input_buffer)
     else if (can_read(input_buffer, 5) && (strncasecmp(buffer_at_offset(input_buffer), "false", 5) == 0))
     {
         item->type = AJson5_FALSE;
-        input_buffer += 5;
+        input_buffer->offset += 5;
         return STATUS_OK;
     }
     else if (can_read(input_buffer, 4) && (strncasecmp(buffer_at_offset(input_buffer), "true", 4) == 0))
     {
         item->type = AJson5_TRUE;
-        input_buffer += 4;
+        input_buffer->offset += 4;
         return STATUS_OK;
     }
     else if (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == '\"' || buffer_at_offset(input_buffer)[0] == '\''))
     {
-        return parse_string(item, input_buffer);
+        return AJson5_parse_string(item, input_buffer);
     }
     else if ((can_access_at_index(input_buffer, 0) && ((buffer_at_offset(input_buffer)[0] == '-') || (buffer_at_offset(input_buffer)[0] == '+') || (buffer_at_offset(input_buffer)[0] == '.') || ((buffer_at_offset(input_buffer)[0] >= '0') && (buffer_at_offset(input_buffer)[0] <= '9'))))
 
@@ -887,26 +915,27 @@ static FuncStat parse_value(AJson5 *item, parse_buffer *input_buffer)
     }
     else if (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == '['))
     {
-        return parse_array(item, input_buffer);
+        return AJson5_parse_array(item, input_buffer);
     }
     else if (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == '{'))
     {
-        return parse_object(item, input_buffer);
+
+        return AJson5_parse_object(item, input_buffer);
     }
     return STATUS_ERROR;
 }
 AJson5 *ParseWithLength(char *str, size_t length)
 {
     parse_buffer buffer = {0};
-    AJson5 *item = CreateObject();
+    AJson5 *item = AJson5_create_object();
     buffer.content = str;
     buffer.length = length;
     buffer.offset = 0;
-    parse_object(item, &buffer);
+    AJson5_parse_object(item, &buffer);
     return item;
 }
 
-FuncStat FormatValue(char *buf, AJson5 *target)
+static FuncStat AJson5_format_value(char *buf, AJson5 *target)
 {
 
     switch (target->type)
@@ -921,18 +950,18 @@ FuncStat FormatValue(char *buf, AJson5 *target)
         strncpy(buf, "null", 5);
         break;
     case AJson5_ARRAY:
-        return FormatArray(buf, target);
+        return AJson5_format_array(buf, target);
         break;
     case AJson5_OBJECT:
-        return FormatObject(buf, target);
+        return AJson5_format_object(buf, target);
         break;
     case AJson5_DOUBLE:
     case AJson5_INT64:
     case AJson5_UINT64:
-        return FormatNumbers(buf, target);
+        return AJson5_format_number(buf, target);
         break;
     case AJson5_STRING:
-        return FormatString(buf, target);
+        return AJson5_format_string(buf, target);
         break;
     default:
         *buf = '\0';
@@ -941,7 +970,7 @@ FuncStat FormatValue(char *buf, AJson5 *target)
     return STATUS_OK;
 }
 
-FuncStat FormatObject(char *buf, AJson5 *target)
+static FuncStat AJson5_format_object(char *buf, AJson5 *target)
 {
     char s[1024] = {0};
     char child_buf[2048] = {0};
@@ -962,19 +991,21 @@ FuncStat FormatObject(char *buf, AJson5 *target)
         i += 2;
 
         // value format
-        FormatValue(child_buf, child);
+        AJson5_format_value(child_buf, child);
         strcpy(s + i, child_buf);
         i += strlen(child_buf);
         strncpy(s + i, ", ", 2);
         i += 2;
         memset(child_buf, 0, sizeof(child_buf));
     }
+    i-=2;//delete redundant `, `
     s[i++] = '}';
+    s[i++] = '\0';
 
     strncpy(buf, s, i);
 }
 
-FuncStat FormatArray(char *buf, AJson5 *target)
+static FuncStat AJson5_format_array(char *buf, AJson5 *target)
 {
     char s[1024] = {0};
     char child_buf[512] = {0};
@@ -985,17 +1016,20 @@ FuncStat FormatArray(char *buf, AJson5 *target)
     while (child->next != NULL)
     {
         child = child->next;
-        FormatValue(child_buf, child);
+        AJson5_format_value(child_buf, child);
         strcpy(s + i, child_buf);
         i += strlen(child_buf);
         strncpy(s + i, ", ", 2);
         i += 2;
+        memset(child_buf, 0, sizeof(child_buf)); //reset value buffer
     }
+    i-=2;//delete redundant `, `
     s[i++] = ']';
+    s[i++] = '\0';
     strncpy(buf, s, i);
     return STATUS_OK;
 }
-FuncStat FormatString(char *buf, AJson5 *target)
+static FuncStat AJson5_format_string(char *buf, AJson5 *target)
 {
     if (target->type == AJson5_STRING)
     {
@@ -1006,7 +1040,7 @@ FuncStat FormatString(char *buf, AJson5 *target)
     }
     return STATUS_ERROR;
 }
-FuncStat FormatNumbers(char *buf, AJson5 *target)
+static FuncStat AJson5_format_number(char *buf, AJson5 *target)
 {
     switch (target->type)
     {
@@ -1023,3 +1057,44 @@ FuncStat FormatNumbers(char *buf, AJson5 *target)
     return STATUS_OK;
 }
 
+AJson5 * CreateObject(){
+    return AJson5_create_object();
+}
+
+FuncStat AddObjectToObject(AJson5 *target, char *key, AJson5 *item){
+    return AJson5_add_item_to_object(target,key,item);
+}
+
+AJson5 *CreateArray(){
+    return AJson5_create_array();
+}
+
+FuncStat AddArrayToObject(AJson5 *target, char *key, AJson5 *item){
+    return AJson5_add_item_to_object(target,key,item);
+}
+
+FuncStat Dumplicate(char *buf, AJson5 *target){
+        switch (target->type)
+        {
+        case AJson5_OBJECT:
+            AJson5_format_object(buf,target);
+            break;
+        case AJson5_ARRAY:
+            AJson5_format_array(buf,target);
+        default:
+            break;
+        }
+
+return STATUS_OK;
+    
+}
+
+AJson5* LoadFromString(char*s){
+    AJson5*item=new_item();
+    parse_buffer buf={0};
+    buf.content=s;
+    buf.length=strlen(s);
+    AJson5_parse_value(item,&buf);
+    
+    return item;
+}

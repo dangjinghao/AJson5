@@ -1,8 +1,7 @@
 #ifndef AJson5_h
 #define AJson5_h
 #include <stdint.h>
-#include <stddef.h>
-#include<string.h>
+#include <string.h>
 /*
     create  done
     delete  declear only
@@ -24,7 +23,7 @@ typedef enum
     STATUS_NOT_FOUND_ERROR,
     STATUS_SUBSCRIPT_ERROR,
 } FuncStat;
-typedef enum 
+typedef enum
 {
     AJson5_FALSE,
     AJson5_TRUE,
@@ -55,36 +54,20 @@ typedef struct AJson5
     } value;
 } AJson5;
 
-typedef struct 
+typedef struct
 {
-    char* content;
+    char *content;
     size_t length;
     size_t offset;
-}parse_buffer;
+} parse_buffer;
 
-
-
-// if I can use generic...
-/*
-    create all basic type
-*/
-
-AJson5 *CreateNull();
-AJson5 *CreateBool(ValueType t);
-AJson5 *CreateInt(ValueType t, int64_t num);
-AJson5 *CreateDouble(double num);
-AJson5 *CreateString(char *s);
-AJson5 *CreateObject();
-AJson5 *CreateArray();
 // auto check double, int, uint.That is great
 AJson5 *CreateNumber(double num);
+// create an empty object
+AJson5 *CreateObject();
+// create an empty array
+AJson5 *CreateArray();
 
-// the base addTo function
-
-FuncStat AddItemToObject(AJson5 *target, char *keyName, AJson5 *item);
-FuncStat AddItemToArray(AJson5 *target, AJson5 *item);
-// I think we need the way to add item to array with subscript
-// But maybe add to json object is unnecessary ?
 FuncStat InsertItemToArray(AJson5 *target, size_t n, AJson5 *item);
 
 /* create array includes something */
@@ -101,10 +84,10 @@ FuncStat AddTrueToObject(AJson5 *target, char *key);
 FuncStat AddFalseToObject(AJson5 *target, char *key);
 FuncStat AddStringToObject(AJson5 *target, char *key, char *val);
 FuncStat AddNumberToObject(AJson5 *target, char *key, double val);
-
+FuncStat AddObjectToObject(AJson5 *target, char *key, AJson5 *item);
+FuncStat AddArrayToObject(AJson5 *target, char *key, AJson5 *item);
 FuncStat AddNumberArrayToObject(AJson5 *target, char *key, size_t n, double nums[]);
 FuncStat AddStringArrayToObject(AJson5 *target, char *key, size_t n, char *vals[]);
-
 /*
 delete something from item
 must be support auto release/free all the child item
@@ -120,20 +103,7 @@ replace something
 FuncStat ReplaceItemInArray(AJson5 *target, size_t subscript, AJson5 *new_value);
 FuncStat ReplaceItemInObject(AJson5 *target, char *key, AJson5 *new_value);
 
-/*
-    format something
-    maybe I should implement them  early
-*/
-
-FuncStat FormatValue(char*buf,AJson5 *target);
-FuncStat FormatObject(char*buf,AJson5 *target);
-FuncStat FormatArray(char*buf,AJson5 *target);
-FuncStat FormatString(char*buf,AJson5 *target);
-FuncStat FormatNumbers(char*buf,AJson5 *target);
-
-
 // get
-
 
 AJson5 *GetItem(AJson5 *target, char *key);
 char *GetStringValue(AJson5 *item);
@@ -150,16 +120,25 @@ double GetItemDoubleValue(AJson5 *target, char *key);
 double GetItemNumberValue(AJson5 *target, char *key);
 
 /* parse*/
-AJson5*ParseWithLength(char*value,size_t length);
+
+// parse the full obejct
+AJson5 *ParseWithLength(char *value, size_t length);
+
+FuncStat Dumplicate(char *buf, AJson5 *target);
+
+/*
+    parse some partion of json
+    e.g. array string or object string
+*/
+AJson5 *LoadFromString(char *s);
+
 /* marco */
 
-//those macro from cJson
-
+// those macro from cJson
 #define can_access_at_index(buffer, index) ((buffer != NULL) && (((buffer)->offset + index) < (buffer)->length))
 #define cannot_access_at_index(buffer, index) (!can_access_at_index(buffer, index))
 
-
 #define can_read(buffer, size) ((buffer != NULL) && (((buffer)->offset + size) <= (buffer)->length))
-//get the pointer point to current buffer char
+// get the pointer point to current buffer char
 #define buffer_at_offset(buffer) ((buffer)->content + (buffer)->offset)
 #endif
