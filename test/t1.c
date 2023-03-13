@@ -13,7 +13,7 @@ int main(){
     tmp =  (char *)malloc( file_size * sizeof( char ) );
     fread( tmp , file_size/sizeof( char) , sizeof(char) , fp);
     puts(tmp);
-    AJson5*o=ParseWithLength(tmp,file_size);
+    AJson5*o=LoadFromString(tmp);
     char buf[40960]={0};
     Dumplicate(buf,o);
     puts( buf);

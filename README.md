@@ -69,7 +69,7 @@ e.g.
 **Not implement because of only considering ascii code.**
 
 ## TODOLIST:
-- use strcat to append
-- implement buffer auto-growth array or resolve segmentation failed
-- skip function is not so complete
+- skip function is not so complete(use while to check the white characters' exists)
 - robust(fully error handling)
+- get family check
+- use it in production environment

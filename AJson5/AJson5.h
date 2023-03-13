@@ -55,6 +55,13 @@ typedef struct
     size_t offset;
 } parse_buffer;
 
+typedef struct
+{
+    char *array;
+    size_t length;
+    size_t capacity;
+} AutoGrowthBuffer, AGB;
+
 typedef char flag_t;
 
 // auto check double, int, uint.That is great

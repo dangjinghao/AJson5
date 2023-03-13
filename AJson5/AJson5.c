@@ -24,11 +24,11 @@ static FuncStat AJson5_add_item_to_object(AJson5 *target,char *key,AJson5 *item)
 
 
 
-static FuncStat AJson5_format_value(char *buf, AJson5 *target);
-static FuncStat AJson5_format_object(char *buf, AJson5 *target);
-static FuncStat AJson5_format_array(char *buf, AJson5 *target);
-static FuncStat AJson5_format_string(char *buf, AJson5 *target);
-static FuncStat AJson5_format_number(char *buf, AJson5 *target);
+static FuncStat AJson5_format_value(AutoGrowthBuffer*buf, AJson5 *target);
+static FuncStat AJson5_format_object(AutoGrowthBuffer*buf, AJson5 *target);
+static FuncStat AJson5_format_array(AutoGrowthBuffer*buf, AJson5 *target);
+static FuncStat AJson5_format_string(AutoGrowthBuffer*buf, AJson5 *target);
+static FuncStat AJson5_format_number(AutoGrowthBuffer*buf, AJson5 *target);
 
 static FuncStat AJson5_parse_value(AJson5 *item, parse_buffer *input_buffer);
 static FuncStat AJson5_parse_string(AJson5 *item, parse_buffer *input_buffer);
@@ -38,18 +38,13 @@ static FuncStat AJson5_parse_special_key_string(AJson5 *item, parse_buffer *inpu
 // done
 
 //implements of  auto growth buffer
-typedef struct {
-    char* Buffer;
-    size_t length;
-    size_t capacity;
-}AutoGrowthBuffer,AGB;
 
 
 
 
 int AGB_Init(AutoGrowthBuffer *b){
-    b->Buffer=calloc(257,sizeof(char));
-    if(b->Buffer==NULL){
+    b->array=calloc(257,sizeof(char));
+    if(b->array==NULL){
         return 1;
     }
     b->length=0;
@@ -58,8 +53,8 @@ int AGB_Init(AutoGrowthBuffer *b){
 }
 
 static int AGB_Realloc(AutoGrowthBuffer*b){
-    b->Buffer=(char*)realloc(b->Buffer,b->capacity+b->capacity/2);
-    if(b->Buffer==NULL){
+    b->array=(char*)realloc(b->array,b->capacity+b->capacity/2);
+    if(b->array==NULL){
         return 1;
     }
     b->capacity+=b->capacity/2;
@@ -74,13 +69,40 @@ int AGB_Append(AutoGrowthBuffer*b,char*src){
             return 1;
         }
     }
-    strcat(b->Buffer,src);
+    strcat(b->array,src);
     b->length=needed_size;
     return 0;
 }
+int AGB_Replace(AutoGrowthBuffer*b,char*src){
+    size_t needed_size =strlen(src);
+    while (needed_size>=b->capacity)
+    {
+        if(AGB_Realloc(b)){
+            return 1;
+        }
+    }
+    memset(b->array,0,b->length);
+    strcpy(b->array,src);
+    b->length=needed_size;
+    return 0;    
+}
+int AGB_Clear(AutoGrowthBuffer*b){
+    memset(b->array, 0, sizeof(b->array));
+    b->length=0;
+    return 0;
+}
 
-
-
+int AGB_DeleteNBack(AutoGrowthBuffer*b,size_t n){
+    if(b->length>=n){
+    b->length-=n;
+   }
+   else{
+    return 1;
+   }
+    memset(b->array+b->length,0,n);
+    // *(b->Buffer+b->length)=0;
+    return 0;
+}
 
 static AJson5 *new_item()
 {
@@ -980,19 +1002,19 @@ AJson5 *LoadFromString(char *str)
     return item;
 }
 
-static FuncStat AJson5_format_value(char *buf, AJson5 *target)
+static FuncStat AJson5_format_value(AutoGrowthBuffer* buf, AJson5 *target)
 {
 
     switch (target->type)
     {
     case AJson5_FALSE:
-        strncpy(buf, "false", 6);
+        AGB_Replace(buf, "false");
         break;
     case AJson5_TRUE:
-        strncpy(buf, "true", 5);
+        AGB_Replace(buf, "true");
         break;
     case AJson5_NULL:
-        strncpy(buf, "null", 5);
+        AGB_Replace(buf, "null");
         break;
     case AJson5_ARRAY:
         return AJson5_format_array(buf, target);
@@ -1009,97 +1031,97 @@ static FuncStat AJson5_format_value(char *buf, AJson5 *target)
         return AJson5_format_string(buf, target);
         break;
     default:
-        *buf = '\0';
+        AGB_Clear(buf);
+        return STATUS_ERROR;
         break;
     }
     return STATUS_OK;
 }
 
-static FuncStat AJson5_format_object(char *buf, AJson5 *target)
+static FuncStat AJson5_format_object(AutoGrowthBuffer*buf, AJson5 *target)
 {
-    // char s[40960] = {0};
-    char child_buf[40960] = {0};
-    size_t i = 0;
-    buf[i++] = '{';
+    // char child_buf[40960] = {0};
+    AutoGrowthBuffer child_buf;
+    AGB_Init(&child_buf);
+    // size_t i = 0;
+    AGB_Append(buf,"{");
 
     AJson5 *child = target->value.Child;
     while (child->next != NULL)
     {
         child = child->next;
 
-        // key format
-        buf[i++] = '\"';
-        strcpy(buf + i, child->key);
-        i += strlen(child->key);
-        buf[i++] = '\"';
-        strncpy(buf + i, ": ", 2);
-        i += 2;
+        AGB_Append(buf,"\"") ;
+        AGB_Append(buf,child->key);
+        // i += strlen(child->key);
+        AGB_Append(buf,"\"") ;
+        AGB_Append(buf,": ") ;
+
 
         // value format
-        AJson5_format_value(child_buf, child);
-        strcpy(buf + i, child_buf);
-        i += strlen(child_buf);
-        strncpy(buf + i, ", ", 2);
-        i += 2;
-        memset(child_buf, 0, sizeof(child_buf));
-    }
-    i-=2;//delete redundant `, `
-    buf[i++] = '}';
-    buf[i++] = '\0';
+        AJson5_format_value(&child_buf, child);
+        AGB_Append(buf,child_buf.array);
+        AGB_Append(buf,", ");
+        AGB_Clear(&child_buf);
 
-    // strncpy(buf, s, i);
+    }
+    //delete redundant `, `
+    AGB_DeleteNBack(buf,2);
+    AGB_Append(buf,"}");
+
     return STATUS_OK;
 }
 
-static FuncStat AJson5_format_array(char *buf, AJson5 *target)
+static FuncStat AJson5_format_array(AutoGrowthBuffer*buf, AJson5 *target)
 {
     // char s[40960] = {0};
-    char child_buf[40960] = {0};
-    size_t i = 0;
-    buf[i++] = '[';
-
+    AutoGrowthBuffer child_buf;
+    AGB_Init(&child_buf);
+    // size_t i = 0;
+    AGB_Append(buf,"[");
     AJson5 *child = target->value.Child;
     while (child->next != NULL)
     {
         child = child->next;
-        AJson5_format_value(child_buf, child);
-        strcpy(buf + i, child_buf);
-        i += strlen(child_buf);
-        strncpy(buf + i, ", ", 2);
-        i += 2;
-        memset(child_buf, 0, sizeof(child_buf)); //reset value buffer
+        AJson5_format_value(&child_buf, child);
+        AGB_Append(buf,child_buf.array);
+        AGB_Append(buf,", ");
+        AGB_Clear(&child_buf);
     }
-    i-=2;//delete redundant `, `
-    buf[i++] = ']';
-    buf[i++] = '\0';
-    // strncpy(buf, s, i);
+    //delete redundant `, `
+    AGB_DeleteNBack(buf,2);
+    AGB_Append(buf,"]");
     return STATUS_OK;
 }
-static FuncStat AJson5_format_string(char *buf, AJson5 *target)
+static FuncStat AJson5_format_string(AutoGrowthBuffer *buf, AJson5 *target)
 {
     if (target->type == AJson5_STRING)
     {
-        buf[0] = '\"';
-        strcpy(buf + 1, target->value.Str);
-        buf[strlen(target->value.Str) + 1] = '\"';
+        // AGB_Clear(buf);
+        AGB_Append(buf,"\"");
+        AGB_Append(buf,target->value.Str);
+        AGB_Append(buf,"\"");
         return STATUS_OK;
     }
     return STATUS_ERROR;
 }
-static FuncStat AJson5_format_number(char *buf, AJson5 *target)
+static FuncStat AJson5_format_number(AutoGrowthBuffer*buf, AJson5 *target)
 {
+    
+    char tmpBuf[64]={0};
     switch (target->type)
     {
     case AJson5_DOUBLE:
-        sprintf(buf, "%.8lf", target->value.Double);
+        sprintf(tmpBuf, "%.8lf", target->value.Double);
         break;
     case AJson5_INT64:
-        sprintf(buf, "%ld", target->value.Int);
+        sprintf(tmpBuf, "%ld", target->value.Int);
         break;
     case AJson5_UINT64:
-        sprintf(buf, "%ld", target->value.Uint);
+        sprintf(tmpBuf, "%ld", target->value.Uint);
         break;
     }
+    AGB_Replace(buf,tmpBuf);
     return STATUS_OK;
 }
 
@@ -1119,18 +1141,21 @@ FuncStat AddArrayToObject(AJson5 *target, char *key, AJson5 *item){
     return AJson5_add_item_to_object(target,key,item);
 }
 
-FuncStat Dumplicate(char *buf, AJson5 *target){
+FuncStat Dumplicate(char *str, AJson5 *target){
+        AutoGrowthBuffer tmpbuffer;
+        AGB_Init(&tmpbuffer);
+
         switch (target->type)
         {
         case AJson5_OBJECT:
-            AJson5_format_object(buf,target);
+            AJson5_format_object(&tmpbuffer,target);
             break;
         case AJson5_ARRAY:
-            AJson5_format_array(buf,target);
+            AJson5_format_array(&tmpbuffer,target);
         default:
             break;
         }
-
+        strcpy(str,tmpbuffer.array);
 return STATUS_OK;
     
 }
