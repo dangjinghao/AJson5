@@ -3,16 +3,10 @@
 #include <stdint.h>
 #include <string.h>
 /*
-    create  done
-    delete  declear only
-    update/replace  declear only
-    search/get
-    print/format
-    duplicate
-
     please try to implement a method
     looks like list calling in other language
     or oo
+    NO YOU DON'T!
 
 */
 
@@ -61,6 +55,8 @@ typedef struct
     size_t offset;
 } parse_buffer;
 
+typedef char flag_t;
+
 // auto check double, int, uint.That is great
 AJson5 *CreateNumber(double num);
 // create an empty object
@@ -105,7 +101,7 @@ FuncStat ReplaceItemInObject(AJson5 *target, char *key, AJson5 *new_value);
 
 // get
 
-AJson5 *GetItem(AJson5 *target, char *key);
+AJson5 *get_item(AJson5 *target, char *key);
 char *GetStringValue(AJson5 *item);
 ValueType GetBoolValue(AJson5 *item);
 uint64_t GetUIntValue(AJson5 *item);
@@ -122,7 +118,6 @@ double GetItemNumberValue(AJson5 *target, char *key);
 /* parse*/
 
 // parse the full obejct
-AJson5 *ParseWithLength(char *value, size_t length);
 
 FuncStat Dumplicate(char *buf, AJson5 *target);
 

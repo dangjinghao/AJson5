@@ -3,7 +3,7 @@
 #include <stdlib.h>
 int main(){
     FILE*fp;
-    fp=fopen("t5.json","r");
+    fp=fopen("t1.json5","r");
     fseek( fp , 0 , SEEK_END );
     int file_size;
     file_size = ftell( fp );
@@ -14,7 +14,7 @@ int main(){
     fread( tmp , file_size/sizeof( char) , sizeof(char) , fp);
     puts(tmp);
     AJson5*o=ParseWithLength(tmp,file_size);
-    char buf[2048]={0};
+    char buf[40960]={0};
     Dumplicate(buf,o);
     puts( buf);
     return 0;

@@ -69,8 +69,7 @@ e.g.
 **Not implement because of only considering ascii code.**
 
 ## TODOLIST:
-- buffer size macro and should we allocate buffer on heap?
-- t4.json test failed
+- use strcat to append
+- implement buffer auto-growth array or resolve segmentation failed
 - skip function is not so complete
-- some wrong ways to use `sizeof(s)/sizeof(char)`
 - robust(fully error handling)
