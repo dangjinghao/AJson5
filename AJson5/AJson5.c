@@ -539,8 +539,10 @@ static parse_buffer *buffer_skip_whitespace(parse_buffer *buffer)
     if (cannot_access_at_index(buffer, 0))
         return buffer;
 
-    // skip the whitespace(ascii code <=32)
-    while (can_access_at_index(buffer, 0) && (buffer_at_offset(buffer)[0] <= 32))
+    
+    do{
+        // skip the whitespace(ascii code <=32)
+    while (buffer_at_offset(buffer)[0] <= 32)
         ++buffer->offset;
 
     // skip the // comments
@@ -556,8 +558,7 @@ static parse_buffer *buffer_skip_whitespace(parse_buffer *buffer)
     /*
         skip  multiline comments
     */
-    else if (
-        can_access_at_index(buffer, 1) && (!strncmp(buffer_at_offset(buffer), "/*", 2)))
+    else if (can_access_at_index(buffer, 1) && (!strncmp(buffer_at_offset(buffer), "/*", 2)))
     {
         // skip "/*   */"
         buffer->offset += 2;
@@ -571,9 +572,11 @@ static parse_buffer *buffer_skip_whitespace(parse_buffer *buffer)
     /*
         e.g."    \n    xxx"
     */
-    while (can_access_at_index(buffer, 0) && (buffer_at_offset(buffer)[0] <= 32))
+    while (buffer_at_offset(buffer)[0] <= 32)
         ++buffer->offset;
+    }while (buffer_at_offset(buffer)[0] <= 32||!strncmp(buffer_at_offset(buffer), "/*", 2)||!strncmp(buffer_at_offset(buffer), "//", 2));
 
+    
     // UDRSTD: I dont know when will it be used
     if (buffer->offset == buffer->length)
     {
@@ -1097,9 +1100,22 @@ static FuncStat AJson5_format_string(AutoGrowthBuffer *buf, AJson5 *target)
 {
     if (target->type == AJson5_STRING)
     {
+        
         // AGB_Clear(buf);
         AGB_Append(buf,"\"");
-        AGB_Append(buf,target->value.Str);
+
+        ////for escape the "
+        char *value_buffer = (char*)malloc(2*strlen(target->value.Str)/sizeof(char));
+        char* the_value = target->value.Str;
+        size_t value_end=0,value_buffer_end=0;
+        while (the_value[value_end]!='\0'){
+            if(the_value[value_end]=='\"'){
+                value_buffer[value_buffer_end++]='\\';
+            }
+            value_buffer[value_buffer_end++]=the_value[value_end++];
+        }
+
+        AGB_Append(buf,value_buffer);
         AGB_Append(buf,"\"");
         return STATUS_OK;
     }

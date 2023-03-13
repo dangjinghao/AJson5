@@ -72,4 +72,4 @@ e.g.
 - skip function is not so complete(use while to check the white characters' exists)
 - robust(fully error handling)
 - get family check
-- use it in production environment
+- test it in a production environment

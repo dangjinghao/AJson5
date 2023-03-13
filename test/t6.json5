@@ -1,0 +1,37 @@
+{
+    // comments
+    unquoted: 'and you can quote me on that',  //comments hey
+    //other comments
+    //another comments
+
+
+
+
+    /*
+      multi-line comments
+    */
+    //comments
+    singleQuotes: 'I can use "double quotes" here',
+    lineBreaks: "Look, Mom! \
+  No \\n's!",
+    //comments
+
+    hexadecimal: 0xdecaf,
+    leadingDecimalPoint: .8675309, andTrailing: 8675309.,
+    //comments
+    positiveSign: +1,
+    //comments
+    //comments
+    //comments
+    trailingComma: 'in objects', andIn: ['arrays',],
+    //comments
+    //comments
+    //comments
+    //comments
+    //comments
+    //comments
+    "backwardsCompatible": "with JSON",
+    //comments
+    //comments
+    //comments
+  }
