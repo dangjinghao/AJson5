@@ -69,7 +69,6 @@ e.g.
 **Not implement because of only considering ascii code.**
 
 ## TODOLIST:
-- skip function is not so complete(use while to check the white characters' exists)
-- robust(fully error handling)
+- no free function directly used
 - get family check
 - test it in a production environment

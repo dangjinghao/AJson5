@@ -14,8 +14,13 @@ typedef enum
 {
     STATUS_OK,
     STATUS_ERROR,
-    STATUS_NOT_FOUND_ERROR,
-    STATUS_SUBSCRIPT_ERROR,
+    STATUS_AJSON5_NOT_FOUND_ERROR,
+    STATUS_AJSON5_SUBSCRIPT_ERROR,
+    STATUS_AJSON5_Allocate_ERROR,
+    STATUS_AGB_INIT_ERROR,
+    STATUS_AGB_ARGUMENT_ERROR,
+    STATUS_AGB_REALLOC_ERROR,
+    
 } FuncStat;
 typedef enum
 {
@@ -136,7 +141,11 @@ AJson5 *LoadFromString(char *s);
 
 /* marco */
 
+//for parse_number function,the most length of number 
+#define PARSE_NUMBER_LENGTH 64
+
 // those macro from cJson
+
 #define can_access_at_index(buffer, index) ((buffer != NULL) && (((buffer)->offset + index) < (buffer)->length))
 #define cannot_access_at_index(buffer, index) (!can_access_at_index(buffer, index))
 

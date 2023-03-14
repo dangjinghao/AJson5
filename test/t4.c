@@ -3,7 +3,7 @@
 #include <stdlib.h>
 int main(){
     FILE*fp;
-    fp=fopen("t1.json5","r");
+    fp=fopen("t4.json","r");
     fseek( fp , 0 , SEEK_END );
     int file_size;
     file_size = ftell( fp );

@@ -14,6 +14,10 @@ int main(){
     fread( tmp , file_size/sizeof( char) , sizeof(char) , fp);
     puts(tmp);
     AJson5*o=LoadFromString(tmp);
+    if(o==NULL){
+        puts("error occurred when parsing!");
+        exit(0);
+    }
     char buf[40960]={0};
     Dumplicate(buf,o);
     puts( buf);
