@@ -23,7 +23,8 @@ static AJson5 *AJson5_create_string(char *s);
 static AJson5 *AJson5_create_object();
 static AJson5 *AJson5_create_array();
 static FuncStat AJson5_add_item_to_array(AJson5 *target, AJson5 *item);
-static FuncStat AJson5_add_item_to_object(AJson5 *target, char *key, AJson5 *item);
+static FuncStat AJson5_add_item_to_target(AJson5 *target, char *key, AJson5 *item);
+static AJson5 *AJson5_get_item(AJson5 *target, char *key);
 
 static FuncStat AJson5_format_value(AutoGrowthBuffer *buf, AJson5 *target);
 static FuncStat AJson5_format_object(AutoGrowthBuffer *buf, AJson5 *target);
@@ -163,6 +164,18 @@ static AJson5 *Ajson5_create_null()
     return item;
 }
 
+AJson5*CreateNull(){
+    return Ajson5_create_null();
+}
+
+AJson5*CreateTrue(){
+    return AJson5_create_bool(AJson5_TRUE);
+}
+
+
+AJson5*CreateFalse(){
+    return AJson5_create_bool(AJson5_FALSE);
+}
 static AJson5 *AJson5_create_bool(ValueType t)
 {
     AJson5 *item = new_item();
@@ -209,6 +222,9 @@ static AJson5 *AJson5_create_string(char *s)
     return item;
 }
 
+AJson5*CreateString(char*s){
+    return AJson5_create_string(s);
+}
 static AJson5 *AJson5_create_object()
 {
     AJson5 *item = new_item();
@@ -224,7 +240,7 @@ static AJson5 *AJson5_create_array()
     item->value.Child = new_item();
     return item;
 }
-static FuncStat AJson5_add_item_to_object(
+static FuncStat AJson5_add_item_to_target(
     AJson5 *target,
     char *key,
     AJson5 *item)
@@ -281,46 +297,76 @@ AJson5 *CreateNumber(double num)
     return AJson5_create_number(num);
 }
 
-FuncStat AddNullToObject(AJson5 *target, char *key)
+FuncStat AddNullToObjectByKey(AJson5 *target, char *key)
 {
-    return AJson5_add_item_to_object(target, key, Ajson5_create_null());
+    return AJson5_add_item_to_target(target, key, Ajson5_create_null());
 }
 
-FuncStat AddTrueToObject(AJson5 *target, char *key)
+
+FuncStat AddNullToArray(AJson5 *target)
 {
-    return AJson5_add_item_to_object(target, key, AJson5_create_bool(AJson5_TRUE));
+    return AJson5_add_item_to_target(target, NULL, Ajson5_create_null());
 }
 
-FuncStat AddFalseToObject(AJson5 *target, char *key)
+
+FuncStat AddTrueToObjectByKey(AJson5 *target, char *key)
 {
-    return AJson5_add_item_to_object(target, key, AJson5_create_bool(AJson5_FALSE));
+    return AJson5_add_item_to_target(target, key, AJson5_create_bool(AJson5_TRUE));
 }
 
-FuncStat AddStringToObject(AJson5 *target, char *key, char *val)
+FuncStat AddTrueToArray(AJson5 *target)
 {
-    return AJson5_add_item_to_object(target, key, AJson5_create_string(val));
+    return AJson5_add_item_to_target(target, NULL, AJson5_create_bool(AJson5_TRUE));
 }
 
-FuncStat AddNumberToObject(AJson5 *target, char *key, double val)
+FuncStat AddFalseToObjectByKey(AJson5 *target, char *key)
 {
-    return AJson5_add_item_to_object(target, key, AJson5_create_number(val));
+    return AJson5_add_item_to_target(target, key, AJson5_create_bool(AJson5_FALSE));
 }
 
-AJson5 *CreateNumberArray(size_t len, double nums[])
+FuncStat AddFalseToArray(AJson5 *target)
+{
+    return AJson5_add_item_to_target(target, NULL, AJson5_create_bool(AJson5_FALSE));
+}
+
+FuncStat AddStringToObjectByKey(AJson5 *target, char *key, char *val)
+{
+    return AJson5_add_item_to_target(target, key, AJson5_create_string(val));
+}
+
+FuncStat AddStringToArray(AJson5 *target,char*str){
+    return AJson5_add_item_to_target(target, NULL, AJson5_create_string(str));
+
+}
+//if there are not keys exists,key should be NULL
+FuncStat AddSomethingToTarget(AJson5 *target, char *key, AJson5 *item){
+    return AJson5_add_item_to_target(target, key,item);
+
+}
+FuncStat AddNumberToObjectByKey(AJson5 *target, char *key, double val)
+{
+    return AJson5_add_item_to_target(target, key, AJson5_create_number(val));
+}
+FuncStat AddNumberToArray(AJson5 *target,double val){
+    return AJson5_add_item_to_target(target, NULL, AJson5_create_number(val));
+
+}
+AJson5 *CreateNumberArray(size_t n, double nums[])
 {
     AJson5 *array = AJson5_create_array();
     AJson5 *the_child = array->value.Child;
 
-    for (size_t i = 0; i < len; i++)
+    for (size_t i = 0; i < n; i++)
     {
         the_child->next = AJson5_create_number(nums[i]);
         the_child = the_child->next;
     }
     return array;
 }
-FuncStat AddNumberArrayToObject(AJson5 *target, char *key, size_t n, double nums[])
+//when target is array,the key should be NULL
+FuncStat AddNumberArrayToTargetByKey(AJson5 *target, char *key, size_t n, double nums[])
 {
-    return AJson5_add_item_to_object(target, key, CreateNumberArray(n, nums));
+    return AJson5_add_item_to_target(target, key, CreateNumberArray(n, nums));
 }
 
 AJson5 *CreateStringArray(size_t len, char *vals[])
@@ -336,31 +382,49 @@ AJson5 *CreateStringArray(size_t len, char *vals[])
     return array;
 }
 
-FuncStat AddStringArrayToObject(AJson5 *target, char *key, size_t n, char *vals[])
+//when target is array,the key should be NULL
+FuncStat AddStringArrayToTargetByKey(AJson5 *target, char *key, size_t n, char *vals[])
 {
-    return AJson5_add_item_to_object(target, key, CreateStringArray(n, vals));
+    return AJson5_add_item_to_target(target, key, CreateStringArray(n, vals));
 }
 
-FuncStat InsertItemToArray(AJson5 *target, size_t n, AJson5 *item)
+//You can't inset to the end of array,please use add*
+//start at 0
+FuncStat InsertItemToArrayByIndex(AJson5 *target, size_t index, AJson5 *item)
 {
 
+    if(target==NULL||item==NULL){
+        return STATUS_ERROR;
+    }
     AJson5 *the_child = target->value.Child;
-    for (size_t i = 0; i < n && the_child->next != NULL; i++)
+    for (size_t i = 0; i < index && the_child->next != NULL; i++)
         the_child = the_child->next;
 
+    if(the_child->next==NULL){
+        return STATUS_AJSON5_SUBSCRIPT_ERROR;
+    }
     item->next = the_child->next;
-    item->next = item;
+    the_child->next = item;
     return STATUS_OK;
 }
 
-FuncStat DeleteItemFromArray(AJson5 *src, size_t subscript)
+//start at 0
+FuncStat DeleteItemFromArrayByIndex(AJson5 *src, size_t index)
 {
+    if(src==NULL||src->type!=AJson5_ARRAY){
+        return STATUS_ERROR;
+    }
+
     AJson5 *the_child = src->value.Child;
-    for (size_t i = 0; i < subscript && the_child->next != NULL; i++)
+    for (size_t i = 0; i < index && the_child->next != NULL; i++)
         the_child = the_child->next;
+    
+    if(the_child->next==NULL){
+        return STATUS_AJSON5_SUBSCRIPT_ERROR;
+    }
     AJson5 *targetItem = the_child->next;
     the_child->next = targetItem->next;
-    free(targetItem);
+    AJson5_free_item(targetItem);
     return STATUS_OK;
 }
 
@@ -373,19 +437,19 @@ static FuncStat AJson5_free_item(AJson5 *target)
     {
     case AJson5_OBJECT:
     case AJson5_ARRAY:
-        AJson5 *arrayItem = target->value.Child;
+        AJson5 *childItem = target->value.Child;
         //child next handler
-        while (arrayItem->next != NULL)
+        while (childItem->next != NULL)
         {
-            AJson5 *arrayNext = arrayItem->next;
-            AJson5_free_item(arrayItem);
-            arrayItem = arrayNext;
+            AJson5 *childNext = childItem->next;
+            AJson5_free_item(childItem);
+            childItem = childNext;
         }
-        AJson5_free_item(target->value.Child);
         break; 
     case AJson5_EMPTY://maybe empty or the 1st node in object or array
         if(target->next!=NULL){
-            AJson5_free_item(target->next);
+
+            // AJson5_free_item(target->next); //conflict with the process of free array 
         }
         break;
     case AJson5_STRING:
@@ -402,11 +466,15 @@ static FuncStat AJson5_free_item(AJson5 *target)
     free(target);
     return STATUS_OK;
 }
-//FIXME: is it necessary?
-FuncStat DeleteItemFromObject(AJson5 *src, char *key)
+FuncStat DeleteItemFromObjectByKey(AJson5 *src, char *key)
 {
+    if(src==NULL||src->type!=AJson5_OBJECT) {
+        return STATUS_ERROR;
+    }
+
     AJson5 *item = src->value.Child;
-    while (item->next != NULL && strcmp(item->next->key, key) != 0)
+    while (item->next != NULL
+     && strcmp(item->next->key, key) != 0)
     {
         item = item->next;
     }
@@ -420,7 +488,6 @@ FuncStat DeleteItemFromObject(AJson5 *src, char *key)
     return STATUS_AJSON5_NOT_FOUND_ERROR;
 }
 
-//FIXME: wrong implements
 FuncStat Clear(AJson5 *target)
 {
     // only leave the child item
@@ -429,38 +496,55 @@ FuncStat Clear(AJson5 *target)
     return STATUS_OK;
 }
 
-FuncStat ReplaceItemInArray(AJson5 *target, size_t subscript, AJson5 *new_item)
+FuncStat ReplaceItemInArrayByIndex(AJson5 *target, size_t index, AJson5 *new_item)
 {
 
+    if(target==NULL||new_item==NULL){
+        return STATUS_ERROR;
+    }
     AJson5 *child = target->value.Child;
-    for (size_t i = 0; i < subscript; i++)
+    for (size_t i = 0; i < index&&child->next!=NULL; i++)
     {
         child = child->next;
     }
 
+    if(child->next==NULL){
+        return STATUS_AJSON5_SUBSCRIPT_ERROR;
+    }
     new_item->next = child->next->next;
-    free(child->next);//FIXME: string type may be unfree
+    AJson5_free_item(child->next);
     child->next = new_item;
     return STATUS_OK;
 }
 
-FuncStat ReplaceItemInObject(AJson5 *target, char *key, AJson5 *new_object)
+FuncStat ReplaceItemInObjectByKey(AJson5 *target, char *key, AJson5 *new_object)
 {
     AJson5 *child = target->value.Child;
-    while (child->next != NULL && strcmp(key, child->next->key) != 0)
+    while (child->next != NULL && child->next->key!=NULL&&strcmp(key, child->next->key) != 0)
     {
         child = child->next;
     }
+    
+    if(child->next==NULL){
+        return STATUS_AJSON5_NOT_FOUND_ERROR;
+    }else if(child->next->key==NULL){
+        return STATUS_ERROR;
+    }
     new_object->key = key;
     new_object->next = child->next->next;
-    free(child->next);
+    AJson5_free_item(child->next);
     child->next = new_object;
     return STATUS_OK;
 }
 
-AJson5 *get_item(AJson5 *target, char *key)
+static AJson5 *AJson5_get_item(AJson5 *target, char *key)
 {
+    if(target==NULL||key==NULL||strlen(key)==0){
+        return NULL;
+    }
     AJson5 *child = target->value.Child;
+    if(child->next->key==NULL)return NULL;
+
     while (child->next != NULL && strcmp(key, child->next->key) != 0)
     {
         child = child->next;
@@ -468,7 +552,10 @@ AJson5 *get_item(AJson5 *target, char *key)
     return child->next;
 }
 
-char *GetStringValue(AJson5 *item)
+AJson5*GetItemByKey(AJson5 *target, char *key){
+    return AJson5_get_item(target,key);
+}
+char *GetValueString(AJson5 *item)
 {
     if (item->type == AJson5_STRING)
     {
@@ -477,104 +564,123 @@ char *GetStringValue(AJson5 *item)
     return "";
 }
 
-ValueType GetBoolValue(AJson5 *item)
+ValueType GetValueBool(AJson5 *item)
 {
 
     return item->type == AJson5_TRUE || item->type == AJson5_FALSE ? item->type : AJson5_EMPTY;
 }
 
-uint64_t GetUIntValue(AJson5 *item)
+//default return value is 0
+uint64_t GetValueUInt(AJson5 *item)
 {
     if (item->type == AJson5_UINT64)
         return item->value.Uint;
     return 0;
 }
 
-int64_t GetIntValue(AJson5 *item)
+//default return value is 0
+int64_t GetValueInt(AJson5 *item)
 {
     if (item->type == AJson5_INT64)
         return item->value.Int;
     return 0;
 }
 
-double GetDoubleValue(AJson5 *item)
+//default return value is 0
+double GetValueDouble(AJson5 *item)
 {
     if (item->type == AJson5_DOUBLE)
         return item->value.Double;
     return 0;
 }
 
-AJson5 *GetItemFromArray(AJson5 *item, size_t n)
+AJson5 *GetArrayItemByindex(AJson5 *item, size_t index)
 {
+    if(item==NULL){
+        return NULL;
+    }
     if (item->type == AJson5_ARRAY)
     {
         AJson5 *tmpItem = item->value.Child;
-        for (size_t i = 0; i < n; i++)
+        for (size_t i = 0; i < index; i++)
         {
-            tmpItem = tmpItem->next;
+            if(tmpItem->next!=NULL){
+                tmpItem = tmpItem->next;
+            }else{
+                break;//next is NULL
+            }
         }
         return tmpItem->next;
     }
     return NULL;
 }
 
-char *GetItemStringValue(AJson5 *target, char *key)
+char *GetValueStringByKey(AJson5 *target, char *key)
 {
-    AJson5 *targetItem = get_item(target, key);
+    AJson5 *targetItem = AJson5_get_item(target, key);
     if (targetItem == NULL)
         return "";
-    return GetStringValue(targetItem);
+    return GetValueString(targetItem);
 }
 
-ValueType GetItemBoolValue(AJson5 *target, char *key)
+//Due to special dedclaration , the return value True is 1,False is 0 and no target item will return AJson5_EMPTY=2
+ValueType GetBoolValueByKey(AJson5 *target, char *key)
 {
-    AJson5 *targetItem = get_item(target, key);
+    AJson5 *targetItem = AJson5_get_item(target, key);
     if (targetItem == NULL)
         return AJson5_EMPTY;
-    return GetBoolValue(targetItem);
+    return GetValueBool(targetItem);
 }
 
-uint64_t GetItemUIntValue(AJson5 *target, char *key)
+//no target found will return value is 0
+uint64_t GetUIntValueByKey(AJson5 *target, char *key)
 {
-    AJson5 *targetItem = get_item(target, key);
+    AJson5 *targetItem = AJson5_get_item(target, key);
     if (targetItem == NULL)
         return 0;
-    return GetUIntValue(targetItem);
+    return GetValueUInt(targetItem);
 }
 
-int64_t GetItemIntValue(AJson5 *target, char *key)
+//no target found will return value is 0
+int64_t GetIntValueByKey(AJson5 *target, char *key)
 {
-    AJson5 *targetItem = get_item(target, key);
+    AJson5 *targetItem = AJson5_get_item(target, key);
     if (targetItem == NULL)
         return 0;
-    return GetIntValue(targetItem);
+    return GetValueInt(targetItem);
 }
 
-double GetItemDoubleValue(AJson5 *target, char *key)
+//no target found will return value is 0
+double GetDoubleValueByKey(AJson5 *target, char *key)
 {
-    AJson5 *targetItem = get_item(target, key);
+    AJson5 *targetItem = AJson5_get_item(target, key);
     if (targetItem == NULL)
         return 0;
-    return GetDoubleValue(targetItem);
+    return GetValueDouble(targetItem);
 }
 
-double GetItemNumberValue(AJson5 *target, char *key)
+//no target found will return value is 0,what ever the number type ,it will be transformed to double type
+double GetNumberValueByKey(AJson5 *target, char *key)
 {
-    AJson5 *targetItem = get_item(target, key);
+    AJson5 *targetItem = AJson5_get_item(target, key);
+    if (targetItem == NULL)
+        return 0;
+
     switch (targetItem->type)
     {
     case AJson5_UINT64:
-        return (double)GetUIntValue(targetItem);
+        return (double)GetValueUInt(targetItem);
         break;
     case AJson5_DOUBLE:
-        return GetDoubleValue(targetItem);
+        return GetValueDouble(targetItem);
         break;
     case AJson5_INT64:
-        return (double)GetIntValue(targetItem);
+        return (double)GetValueInt(targetItem);
     default:
-        return 0;
         break;
     }
+    return 0;
+
 }
 
 
@@ -776,7 +882,7 @@ static FuncStat AJson5_parse_object(AJson5 *item, parse_buffer *input_buffer)
         {
             goto fail;
         }
-        AJson5_add_item_to_object(item, value_item->key, value_item);
+        AJson5_add_item_to_target(item, value_item->key, value_item);
         buffer_skip_whitespace(input_buffer);
     } while (can_access_at_index(input_buffer, 0) 
     && (buffer_at_offset(input_buffer)[0] == ','));
@@ -1210,21 +1316,21 @@ AJson5 *CreateObject()
     return AJson5_create_object();
 }
 
-FuncStat AddObjectToObject(AJson5 *target, char *key, AJson5 *item)
-{
-    return AJson5_add_item_to_object(target, key, item);
-}
+
+
 
 AJson5 *CreateArray()
 {
     return AJson5_create_array();
 }
 
-FuncStat AddArrayToObject(AJson5 *target, char *key, AJson5 *item)
+//when target is array,the key should be NULL
+FuncStat AddItemToTarget(AJson5 *target, char *key, AJson5 *item)
 {
-    return AJson5_add_item_to_object(target, key, item);
+    return AJson5_add_item_to_target(target, key, item);
 }
 
+//dumplicate object or array
 FuncStat Dumplicate(char *str, AJson5 *target)
 {
     AutoGrowthBuffer tmpbuffer;
@@ -1237,7 +1343,9 @@ FuncStat Dumplicate(char *str, AJson5 *target)
         break;
     case AJson5_ARRAY:
         AJson5_format_array(&tmpbuffer, target);
+        break;
     default:
+        return STATUS_ERROR;
         break;
     }
     strcpy(str, tmpbuffer.array);

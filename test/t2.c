@@ -4,17 +4,17 @@
 
 int main(){
     AJson5* mainObj=CreateObject();
-    AddStringToObject(mainObj,"firstName","John");
-    AddStringToObject(mainObj,"lastName","Smith");
-    AddTrueToObject(mainObj,"isAlive");
-    AddNumberToObject(mainObj,"age",27);
+    AddStringToObjectByKey(mainObj,"firstName","John");
+    AddStringToObjectByKey(mainObj,"lastName","Smith");
+    AddTrueToObjectByKey(mainObj,"isAlive");
+    AddNumberToObjectByKey(mainObj,"age",27);
 
     AJson5* addressObj=CreateObject();
-    AddStringToObject(addressObj,"streetAddress","21 2nd Street");
-    AddStringToObject(addressObj,"city","New York");
-    AddStringToObject(addressObj,"state","NY");
-    AddStringToObject(addressObj,"postalCode","10021-3100");
-    AddObjectToObject(mainObj,"address",addressObj);
+    AddStringToObjectByKey(addressObj,"streetAddress","21 2nd Street");
+    AddStringToObjectByKey(addressObj,"city","New York");
+    AddStringToObjectByKey(addressObj,"state","NY");
+    AddStringToObjectByKey(addressObj,"postalCode","10021-3100");
+    AddItemToTarget(mainObj,"address",addressObj);
     
     char*parse_string ="[\
       {\
@@ -28,10 +28,10 @@ int main(){
     ]";
 
     AJson5*phoneNumbersArr=LoadFromString(parse_string);
-    AddArrayToObject(mainObj,"phoneNumbers",phoneNumbersArr);
+    AddItemToTarget(mainObj,"phoneNumbers",phoneNumbersArr);
     char*childrenArr[16]={"Catherine","Thomas","Trevor"};
-    AddStringArrayToObject(mainObj,"children",3,childrenArr);
-    AddNullToObject(mainObj,"spouse");
+    AddStringArrayToTargetByKey(mainObj,"children",3,childrenArr);
+    AddNullToObjectByKey(mainObj,"spouse");
     char op[2048]={0};
     Dumplicate(op,mainObj);
     puts(op);

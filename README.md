@@ -7,7 +7,7 @@ This repo is created for learning c program language.
 It is not so robust that could not be used for production. ~~Have not enough Unit Test .~~
 
 If you are interested in the source, the file that related to this repo is `AJson5.c` and `AJson5.h` . And I've left some comments to describe the source and how to implement. 
-
+## Thanks to cJson.
 e.g.
 ```json5
 {
@@ -25,22 +25,22 @@ No \\n's!",
 
 ```
 
-[JSON5](https://json5.org/) requires:
-## Objects
+## [JSON5](https://json5.org/) requires:
+### Objects
 **object keys may be an ECMAScript 5.1 IdentifierName.** (Not sure)
 
 ~~Objects may have a single trailing comma.~~
 
-## Arrays
+### Arrays
 ~~Arrays may have a single trailing comma.~~
 
-## Strings
+### Strings
 ~~Strings may be single quoted.~~
 
 ~~Strings may span multiple lines by escaping new line characters.~~
 
 ~~Strings may include character escapes.~~
-## Numbers
+### Numbers
 ~~Numbers may be hexadecimal.~~
 
 ~~Numbers may have a leading or trailing decimal point.~~
@@ -49,7 +49,7 @@ No \\n's!",
 
 ~~Numbers may begin with an explicit plus sign.~~
 
-## Comments
+### Comments
 ~~Single and multi-line comments are allowed.~~
 
 **Multi line should not contains the redundant multi line symbols**
@@ -63,12 +63,18 @@ e.g.
 `/* /*  */ */` bad
 
 `/* /* */` maybe ok
-## White Space
+### White Space
 ~~Additional white space characters are allowed.~~
 
 **Not implement because of only considering ascii code.**
-
-## TODOLIST:
-- no free function directly used
-- get family check
-- test it in a production environment
+## features
+- many json5 features support √
+  - escape characters support √
+  - multi-line string support √
+  - parse many number format support √
+  - etc.(look above👆)
+- json format is compatible √
+- I've forgotten other features (😄)
+ 
+## TODO LIST:
+- test this app in a production environment

@@ -76,7 +76,12 @@ AJson5 *CreateObject();
 // create an empty array
 AJson5 *CreateArray();
 
-FuncStat InsertItemToArray(AJson5 *target, size_t n, AJson5 *item);
+AJson5*CreateTrue();
+AJson5*CreateNull();
+AJson5*CreateFalse();
+AJson5 *CreateString(char*s);
+
+FuncStat InsertItemToArrayByIndex(AJson5 *target, size_t index, AJson5 *item);
 
 /* create array includes something */
 
@@ -87,45 +92,57 @@ AJson5 *CreateStringArray(size_t len, char *vals[]);
 add something  to obj directly
 */
 
-FuncStat AddNullToObject(AJson5 *target, char *key);
-FuncStat AddTrueToObject(AJson5 *target, char *key);
-FuncStat AddFalseToObject(AJson5 *target, char *key);
-FuncStat AddStringToObject(AJson5 *target, char *key, char *val);
-FuncStat AddNumberToObject(AJson5 *target, char *key, double val);
-FuncStat AddObjectToObject(AJson5 *target, char *key, AJson5 *item);
-FuncStat AddArrayToObject(AJson5 *target, char *key, AJson5 *item);
-FuncStat AddNumberArrayToObject(AJson5 *target, char *key, size_t n, double nums[]);
-FuncStat AddStringArrayToObject(AJson5 *target, char *key, size_t n, char *vals[]);
+
+FuncStat AddNullToObjectByKey(AJson5 *target, char *key);
+FuncStat AddTrueToObjectByKey(AJson5 *target, char *key);
+FuncStat AddFalseToObjectByKey(AJson5 *target, char *key);
+FuncStat AddStringToObjectByKey(AJson5 *target, char *key, char *val);
+FuncStat AddNumberToObjectByKey(AJson5 *target, char *key, double val);
+
+
+FuncStat AddItemToTarget(AJson5 *target, char *key, AJson5 *item);
+FuncStat AddNumberArrayToTargetByKey(AJson5 *target, char *key, size_t n, double nums[]);
+FuncStat AddStringArrayToTargetByKey(AJson5 *target, char *key, size_t n, char *vals[]);
+
+FuncStat AddNumberToArray(AJson5 *target,double val);
+FuncStat AddNullToArray(AJson5 *target);
+FuncStat AddFalseToArray(AJson5 *target);
+FuncStat AddTrueToArray(AJson5 *target);
+FuncStat AddStringToArray(AJson5 *target,char*item);
+
 /*
 delete something from item
 must be support auto release/free all the child item
 */
 
-FuncStat DeleteItemFromArray(AJson5 *src, size_t subscript);
-FuncStat DeleteItemFromObject(AJson5 *src, char *key);
+FuncStat DeleteItemFromArrayByIndex(AJson5 *src, size_t index);
+FuncStat DeleteItemFromObjectByKey(AJson5 *src, char *key);
 FuncStat Clear(AJson5 *target);
+
 /*
 replace something
 */
-
-FuncStat ReplaceItemInArray(AJson5 *target, size_t subscript, AJson5 *new_value);
-FuncStat ReplaceItemInObject(AJson5 *target, char *key, AJson5 *new_value);
+FuncStat ReplaceItemInArrayByIndex(AJson5 *target, size_t index, AJson5 *new_value);
+FuncStat ReplaceItemInObjectByKey(AJson5 *target, char *key, AJson5 *new_value);
 
 // get
 
-AJson5 *get_item(AJson5 *target, char *key);
-char *GetStringValue(AJson5 *item);
-ValueType GetBoolValue(AJson5 *item);
-uint64_t GetUIntValue(AJson5 *item);
-int64_t GetIntValue(AJson5 *item);
-double GetDoubleValue(AJson5 *item);
-AJson5 *GetItemFromArray(AJson5 *item, size_t n);
-char *GetItemStringValue(AJson5 *target, char *key);
-ValueType GetItemBoolValue(AJson5 *target, char *key);
-uint64_t GetItemUIntValue(AJson5 *target, char *key);
-int64_t GetItemIntValue(AJson5 *target, char *key);
-double GetItemDoubleValue(AJson5 *target, char *key);
-double GetItemNumberValue(AJson5 *target, char *key);
+AJson5*GetItemByKey(AJson5 *target, char *key);
+char *GetValueString(AJson5 *item);
+ValueType GetValueBool(AJson5 *item);
+uint64_t GetValueUInt(AJson5 *item);
+int64_t GetValueInt(AJson5 *item);
+double GetValueDouble(AJson5 *item);
+AJson5 *GetArrayItemByindex(AJson5 *item, size_t index);
+
+char *GetValueStringByKey(AJson5 *target, char *key);
+ValueType GetBoolValueByKey(AJson5 *target, char *key);
+uint64_t GetUIntValueByKey(AJson5 *target, char *key);
+int64_t GetIntValueByKey(AJson5 *target, char *key);
+double GetDoubleValueByKey(AJson5 *target, char *key);
+double GetNumberValueByKey(AJson5 *target, char *key);
+
+
 
 /* parse*/
 
