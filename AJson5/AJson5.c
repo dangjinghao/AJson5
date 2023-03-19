@@ -222,7 +222,10 @@ static AJson5 *AJson5_create_string(char *s)
 {
     AJson5 *item = new_item();
     item->type = AJson5_STRING;
-    item->value.Str = s;
+        size_t string_length = strlen(s);
+        item->value.Str=calloc(sizeof(char),string_length+1);
+        strncpy(item->value.Str,s,string_length+1);
+
 
     return item;
 }
@@ -250,7 +253,11 @@ static FuncStat AJson5_add_item_to_target(
     char *key,
     AJson5 *item)
 {
-    item->key = key;
+        size_t key_string_length = strlen(key);
+        item->key=calloc(sizeof(char),key_string_length+1);
+        strncpy(item->key,key,key_string_length+1);
+
+    
 
     AJson5 *child = target->value.Child;
     while (child->next != NULL)

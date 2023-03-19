@@ -154,7 +154,7 @@ FuncStat Dumplicate(char *buf, AJson5 *target);
     parse some partion of json
     e.g. array string or object string
 */
-AJson5 *LoadFromString(char *s,size_t size);
+AJson5 *LoadFromString(char *s,size_t str_length);
 
 /* marco */
 
