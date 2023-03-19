@@ -56,7 +56,7 @@ typedef struct AJson5
 typedef struct
 {
     char *content;
-    size_t length;
+    size_t length;  //char array size, not string size
     size_t offset;
 } parse_buffer;
 
@@ -154,7 +154,7 @@ FuncStat Dumplicate(char *buf, AJson5 *target);
     parse some partion of json
     e.g. array string or object string
 */
-AJson5 *LoadFromString(char *s);
+AJson5 *LoadFromString(char *s,size_t size);
 
 /* marco */
 

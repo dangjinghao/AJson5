@@ -144,6 +144,11 @@ FuncStat AGB_DeleteNLast(AutoGrowthBuffer *b, size_t n)
     return STATUS_OK;
 }
 
+FuncStat AGB_Release(AutoGrowthBuffer *b){
+    free(b->array);
+    return STATUS_OK;
+}
+
 static AJson5 *new_item()
 {
     AJson5 *item=NULL;
@@ -439,12 +444,14 @@ static FuncStat AJson5_free_item(AJson5 *target)
     case AJson5_ARRAY:
         AJson5 *childItem = target->value.Child;
         //child next handler
-        while (childItem->next != NULL)
+        while (childItem != NULL)
         {
             AJson5 *childNext = childItem->next;
             AJson5_free_item(childItem);
             childItem = childNext;
         }
+        // free(target->value.Child);//free the empty child
+        target->value.Child=NULL;
         break; 
     case AJson5_EMPTY://maybe empty or the 1st node in object or array
         if(target->next!=NULL){
@@ -819,6 +826,8 @@ static FuncStat AJson5_parse_object(AJson5 *item, parse_buffer *input_buffer)
     item->type = AJson5_OBJECT;
     item->value.Child = new_item();
 
+
+
     AJson5 *value_item = NULL;
     // this function may need a string key without quotes parse function
     if (can_access_at_index(input_buffer, 0) && (buffer_at_offset(input_buffer)[0] == '}'))
@@ -901,8 +910,8 @@ fail:
     //     item->value.Child=NULL;
     //     value_item=NULL;
     // }
-    AJson5_free_item(item->value.Child);
-    item->value.Child=NULL;
+        AJson5_free_item(item->value.Child);
+        item->value.Child=NULL;
     return STATUS_ERROR;
 }
 
@@ -1150,14 +1159,15 @@ static FuncStat AJson5_parse_value(AJson5 *item, parse_buffer *input_buffer)
     }
     return STATUS_ERROR;
 }
-AJson5 *LoadFromString(char *str)
+AJson5 *LoadFromString(char *str,size_t str_length)
 {
     parse_buffer buffer = {0};
-    AJson5 *item = AJson5_create_object();
+    AJson5 *item = new_item();
     buffer.content = str;
-    buffer.length = strlen(str);
+    buffer.length = str_length+1;
     buffer.offset = 0;
     if(AJson5_parse_value(item, &buffer)!=STATUS_OK){
+        AJson5_free_item(item);
         item=NULL;
     };
     return item;
@@ -1228,6 +1238,7 @@ static FuncStat AJson5_format_object(AutoGrowthBuffer *buf, AJson5 *target)
     AGB_DeleteNLast(buf, 2);
     AGB_Append(buf, "}");
 
+    AGB_Release(&child_buf);
     return STATUS_OK;
 }
 
@@ -1250,6 +1261,9 @@ static FuncStat AJson5_format_array(AutoGrowthBuffer *buf, AJson5 *target)
     // delete redundant `, `
     AGB_DeleteNLast(buf, 2);
     AGB_Append(buf, "]");
+    
+    AGB_Release(&child_buf);
+
     return STATUS_OK;
 }
 static FuncStat AJson5_format_string(AutoGrowthBuffer *buf, AJson5 *target)
@@ -1287,6 +1301,7 @@ static FuncStat AJson5_format_string(AutoGrowthBuffer *buf, AJson5 *target)
 
         AGB_Append(buf, value_buffer);
         AGB_Append(buf, "\"");
+        free(value_buffer);
         return STATUS_OK;
     }
     return STATUS_ERROR;
@@ -1349,5 +1364,6 @@ FuncStat Dumplicate(char *str, AJson5 *target)
         break;
     }
     strcpy(str, tmpbuffer.array);
+    AGB_Release(&tmpbuffer);
     return STATUS_OK;
 }
