@@ -253,9 +253,12 @@ static FuncStat AJson5_add_item_to_target(
     char *key,
     AJson5 *item)
 {
-        size_t key_string_length = strlen(key);
-        item->key=calloc(sizeof(char),key_string_length+1);
-        strncpy(item->key,key,key_string_length+1);
+        // don't add the key
+        if(key!=NULL){
+            size_t key_string_length = strlen(key);
+            item->key=calloc(sizeof(char),key_string_length+1);
+            strncpy(item->key,key,key_string_length+1);
+        }
 
     
 
@@ -863,7 +866,6 @@ static FuncStat AJson5_parse_object(AJson5 *item, parse_buffer *input_buffer)
     input_buffer->offset--;
     do
     {
-        value_item = new_item();
 
         input_buffer->offset++;
         buffer_skip_whitespace(input_buffer);
@@ -874,6 +876,9 @@ static FuncStat AJson5_parse_object(AJson5 *item, parse_buffer *input_buffer)
             goto success;
         }
 
+        //move it to here for the json string end and goto success but it has been created a new item;
+        //fix memory leak
+        value_item = new_item();
         if (AJson5_parse_string(value_item, input_buffer) != STATUS_OK)
         {
             if (AJson5_parse_special_key_string(value_item, input_buffer))
@@ -898,7 +903,8 @@ static FuncStat AJson5_parse_object(AJson5 *item, parse_buffer *input_buffer)
         {
             goto fail;
         }
-        AJson5_add_item_to_target(item, value_item->key, value_item);
+        //object key has been added
+        AJson5_add_item_to_target(item, NULL, value_item);
         buffer_skip_whitespace(input_buffer);
     } while (can_access_at_index(input_buffer, 0) 
     && (buffer_at_offset(input_buffer)[0] == ','));
@@ -907,6 +913,7 @@ static FuncStat AJson5_parse_object(AJson5 *item, parse_buffer *input_buffer)
         goto fail; /* expected end of object */
     }
 success:
+
     input_buffer->offset++;
     return STATUS_OK;
 

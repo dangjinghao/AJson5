@@ -77,4 +77,5 @@ e.g.
 - I've forgotten other features (😄)
  
 ## TODO LIST:
+- memory leak in while parse json5 and t2 test.
 - test this app in a production environment
