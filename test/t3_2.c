@@ -28,5 +28,5 @@ int main(){
     char b[10240]={0};
     Dumplicate(b,menuObj);
     puts(b);
-
+    Clear(mainObj);
 }

@@ -77,5 +77,10 @@ e.g.
 - I've forgotten other features (😄)
  
 ## TODO LIST:
-- memory leak in while parse json5 and t2 test.
+- better and overall testcase.
+  - crud
+  - parse
+  - free
+  - dumplicate
+  - check the both of 2 format
 - test this app in a production environment

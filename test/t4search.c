@@ -13,7 +13,7 @@ int main(){
     tmp =  (char *)malloc( file_size * sizeof( char ) );
     fread( tmp , file_size/sizeof( char) , sizeof(char) , fp);
     // puts(tmp);
-    AJson5*o=LoadFromString(tmp);
+    AJson5*o=LoadFromString(tmp,file_size);
     if(o==NULL){
         puts("error occurred when parsing!");
         exit(0);
@@ -32,7 +32,7 @@ int main(){
     InsertItemToArrayByIndex(servlet_val,1,CreateNumber(1));
     // DeleteItemFromArrayByIndex(servlet_val,5);
     ReplaceItemInArrayByIndex(servlet_val,1,CreateTrue());
-    ReplaceItemInObjectByKey(o,"3",CreateNull());
+    // ReplaceItemInObjectByKey(o,"3",CreateNull());
 
     char buf[40960]={0};
     Dumplicate(buf,o);
@@ -40,5 +40,8 @@ int main(){
     // puts(fileTransferFolder);
     // printf("%d\n",b);
     //get in here
+    Clear(o);
+    fclose(fp);
+    free(tmp);
     return 0;
 }

@@ -27,13 +27,14 @@ int main(){
       }\
     ]";
 
-    AJson5*phoneNumbersArr=LoadFromString(parse_string);
+    AJson5*phoneNumbersArr=LoadFromString(parse_string,strlen(parse_string));
     AddItemToTarget(mainObj,"phoneNumbers",phoneNumbersArr);
     char*childrenArr[16]={"Catherine","Thomas","Trevor"};
     AddStringArrayToTargetByKey(mainObj,"children",3,childrenArr);
     AddNullToObjectByKey(mainObj,"spouse");
     char op[2048]={0};
     Dumplicate(op,mainObj);
+    Clear(mainObj);
     puts(op);
 
 }
